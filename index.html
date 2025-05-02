@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Detection</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        #location {
+            font-size: 1.2rem;
+            color: #555;
+            font-weight: 400;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #location.error {
+            color: #d9534f; /* Red color for error message */
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        #location.success {
+            color: #28a745; /* Green color for success message */
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        /* Styling for mobile responsiveness */
+        @media screen and (max-width: 600px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            #location {
+                font-size: 1rem;
+            }
+        }
+
+        #getLocationBtn {
+            padding: 10px 20px;
+            font-size: 1rem;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #getLocationBtn:hover {
+            background-color: #0056b3;
+        }
+
+        #getLocationBtn:disabled {
+            background-color: #c0c0c0;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            font-size: 1rem;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <h1>Location Detection</h1>
+        <button id="getLocationBtn">Get Location</button>
+        <p id="location">Your location will appear here.</p>
+    </div>
+
+    <script>
+        // Get the button and location paragraph
+        const locationButton = document.getElementById('getLocationBtn');
+        const locationDisplay = document.getElementById('location');
+
+        // Function to show error message
+        function showError(message) {
+            locationDisplay.textContent = message;
+            locationDisplay.classList.add('error');
+            locationDisplay.classList.remove('success');
+        }
+
+        // Function to show success message with location on separate lines
+        function showSuccess(lat, lon) {
+            locationDisplay.innerHTML = `Your location is:<br>Latitude: ${lat}<br>Longitude: ${lon}`;
+            locationDisplay.classList.add('success');
+            locationDisplay.classList.remove('error');
+        }
+
+        // Get location when button is clicked
+        locationButton.addEventListener('click', function() {
+            // Disable the button while fetching location
+            locationButton.disabled = true;
+            locationDisplay.innerHTML = "<span class='loading'>Getting your location...</span>";
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        showSuccess(lat, lon);
+
+                        // Send location to the backend (optional)
+                        fetch(`/api/location/receive?lat=${lat}&lon=${lon}`)
+                            .then(response => response.text())
+                            .then(data => console.log(data))
+                            .catch(error => console.error('Error:', error));
+                    },
+                    function(error) {
+                        if (error.code === error.PERMISSION_DENIED) {
+                            showError("User denied Geolocation. Please enable location in your settings.");
+                        } else {
+                            showError("Unable to retrieve your location.");
+                        }
+                    }
+                );
+            } else {
+                showError("Geolocation is not supported by this browser.");
+            }
+        });
+    </script>
+
+</body>
+</html>
